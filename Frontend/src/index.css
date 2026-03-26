@@ -1,0 +1,17 @@
+/* src/index.css */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #2c3e50;
+    /* สีพื้นหลังโทนเข้ม */
+    font-family: sans-serif;
+    overflow: hidden;
+    /* ป้องกัน scrollbar กวนใจเวลาเล่นเกม */
+}
+
+.board-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+}
