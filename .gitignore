@@ -2,23 +2,26 @@
 node_modules/
 Frontend/node_modules/
 Backend/node_modules/
+jspm_packages/
 
 # Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # Build output
 Frontend/dist/
 Frontend/build/
+dist
+build/
+coverage
 
 # Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-*.log
 
 # OS files
 .DS_Store
@@ -28,5 +31,26 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Vite cache
+# Cache
+.cache
+.parcel-cache
+.nyc_output
+.eslintcache
+.stylelintcache
+
+# Vite
 Frontend/.vite/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Frameworks
+.next
+.nuxt
+.svelte-kit/
+.docusaurus
+.serverless/
+
+# Misc
+*.pid
+*.seed
+*.tgz
