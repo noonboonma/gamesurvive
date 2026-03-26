@@ -7,7 +7,14 @@ import GameUI from './features/GameUI';
 import Lobby from './features/Lobby'; // นำเข้าหน้า Lobby
 import Swal from 'sweetalert2';
 
-const socket = io("http://localhost:3000");
+// ดึง URL จากไฟล์ .env ที่เราตั้งค่าไว้ (VITE_API_URL)
+// ถ้าไม่มีค่าใน env จะถอยกลับไปใช้ localhost:8080 (สำหรับการรันเทสในเครื่อง)
+const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+const socket = io(SOCKET_URL, {
+    transports: ["websocket"], // แนะนำให้ระบุ transport เป็น websocket เพื่อความเสถียรบน Cloud Run
+    secure: true               // บังคับใช้ HTTPS
+});
 
 function App() {
     const [user, setUser] = useState(null); // เก็บชื่อผู้เล่น

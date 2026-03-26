@@ -31,9 +31,9 @@ pool.connect((err, client, release) => {
 });
 
 const server = http.createServer(app);
-const io = new Server(server, {
+const io = require("socket.io")(server, {
     cors: {
-        origin: "*",
+        origin: "*", // หรือใส่ URL ของ Frontend ของคุณเพื่อความปลอดภัย
         methods: ["GET", "POST"]
     }
 });
@@ -96,7 +96,7 @@ io.on('connection', (socket) => {
                 isStarted: false
             };
         }
-        
+
         const room = rooms[roomId];
         const isExist = room.lobbyPlayers.find(p => p.id === socket.id);
         if (!isExist) {
@@ -106,13 +106,13 @@ io.on('connection', (socket) => {
                 isReady: false
             });
         }
-        
+
         io.to(roomId).emit('lobby-update', {
             players: room.lobbyPlayers,
             host: room.host,
             isStarted: room.isStarted
         });
-        
+
         if (room.isStarted) {
             socket.emit('init-state', room);
         }
@@ -127,7 +127,7 @@ io.on('connection', (socket) => {
         const player = room.lobbyPlayers.find(p => p.id === socket.id);
         if (player) {
             player.isReady = !player.isReady;
-            io.to(roomId).emit('lobby-update', { 
+            io.to(roomId).emit('lobby-update', {
                 players: room.lobbyPlayers,
                 host: room.host,
                 isStarted: room.isStarted
@@ -145,15 +145,15 @@ io.on('connection', (socket) => {
             room.isStarted = true;
             // โยน array ของ id ล้วนให้ gameLogic ใช้
             room.players = room.lobbyPlayers.map(p => p.id);
-            
+
             room.playerHands = {};
             room.playerCards = {};
             room.players.forEach(pid => {
                 room.playerHands[pid] = shuffleArray([1, 2, 3, 4, 5]);
                 room.playerCards[pid] = [];
             });
-            
-            io.to(roomId).emit('lobby-update', { 
+
+            io.to(roomId).emit('lobby-update', {
                 players: room.lobbyPlayers,
                 host: room.host,
                 isStarted: room.isStarted
@@ -201,18 +201,18 @@ io.on('connection', (socket) => {
         const game = rooms[roomId];
         // ตรวจสอบความถูกต้อง: ต้องอยู่ในเฟสเดิน
         if (!game || game.phase !== 'MOVE_PAWNS') return;
-        
+
         const validPath = validateMove(game, socket.id, fromHex, toHex, pawnId, game.pointsLeft);
         if (validPath && validPath.valid) {
             const pawn = game.pawns.find(p => p.id === pawnId);
-            
+
             if (pawn.status === 'SWIMMER' && game.swimmersMoved.includes(pawnId)) {
                 socket.emit('error-msg', "นักว่ายน้ำเคลื่อนที่ได้แค่ 1 ครั้งต่อรอบ!");
                 return;
             }
 
             const dist = validPath.dist;
-            
+
             // Subtract points
             if (pawn.status === 'SWIMMER' && game.swimPointsLeft >= dist) {
                 game.swimPointsLeft -= dist;
@@ -249,7 +249,7 @@ io.on('connection', (socket) => {
                     const pawnsInBoat = game.pawns.filter(p => p.boatId === b.id);
                     if (pawnsInBoat.length < 3) {
                         pawn.boatId = b.id;
-                        pawn.status = 'IN_BOAT'; 
+                        pawn.status = 'IN_BOAT';
                         console.log(`[Auto-board] Pawn ${pawn.id} boarded boat ${b.id}`);
                         break;
                     }
@@ -262,7 +262,7 @@ io.on('connection', (socket) => {
                 // เดินเสร็จแล้วแต้มหมด ขยับไปทอยเต๋า หรือ จมไทล์
                 nextPhase(game);
             }
-            
+
             io.to(roomId).emit('update-state', game);
         } else {
             console.log(`[Move Rejected] socket=${socket.id}, pawn=${pawnId}, points=${game.pointsLeft}, validPath=`, validPath);
@@ -318,7 +318,7 @@ io.on('connection', (socket) => {
                         capacity: 3,
                         owner: socket.id
                     });
-                    
+
                     // Note: Auto-boarding removed. Pawns in this hex become swimmers and must board from adjacent hex manually.
                     game.pawns.forEach(p => {
                         if (p.c === c && p.r === r && p.status !== 'DEAD' && p.status !== 'SAVED') {
@@ -328,16 +328,16 @@ io.on('connection', (socket) => {
                     });
                 } else if (result.event.value === 'WHIRLPOOL') {
                     // Calculate surrounding water hexes
-                    const diffs = Math.abs(c) % 2 === 0 
+                    const diffs = Math.abs(c) % 2 === 0
                         ? [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]]
                         : [[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
-                    const waterHexes = [{c, r}]; // include center
+                    const waterHexes = [{ c, r }]; // include center
                     diffs.forEach(([dc, dr]) => {
                         const nc = c + dc;
                         const nr = r + dr;
                         const tile = game.board.find(t => t.c === nc && t.r === nr);
                         if (!tile || tile.isRevealed) { // SEA or SUNK
-                            waterHexes.push({c: nc, r: nr});
+                            waterHexes.push({ c: nc, r: nr });
                         }
                     });
 
@@ -364,7 +364,7 @@ io.on('connection', (socket) => {
                     type: result.event.value,
                     c, r
                 });
-                
+
                 applyMonsterEffectsAt(game, c, r);
             }
 
@@ -374,7 +374,7 @@ io.on('connection', (socket) => {
             } else {
                 nextPhase(game);
             }
-            
+
             // ส่ง Event พิเศษบอกว่า "มีการระเบิด/จม" เพื่อให้หน้าจอทำ Antigravity Effect
             io.to(roomId).emit('antigravity-impulse', {
                 origin: { c, r },
@@ -400,11 +400,11 @@ io.on('connection', (socket) => {
         const rolled = creatures[Math.floor(Math.random() * creatures.length)];
 
         game.lastRoll = rolled;
-        
+
         let points = 3;
         if (rolled === 'SEA_DRAGON') points = 1;
         else if (rolled === 'SHARK') points = 2;
-        
+
         game.monsterPointsLeft = points;
 
         // ทอยเสร็จขยับไปเฟส "ขยับสัตว์ร้าย"
@@ -418,7 +418,7 @@ io.on('connection', (socket) => {
     socket.on('move-creature', ({ roomId, monsterId, toHex }) => {
         const game = rooms[roomId];
         if (!game || game.phase !== 'MOVE_CREATURE') return;
-        
+
         const result = moveMonster(game, socket.id, monsterId, toHex, game.monsterPointsLeft);
         if (result.success) {
             game.monsterPointsLeft -= result.dist;
@@ -437,7 +437,7 @@ io.on('connection', (socket) => {
         if (!game || game.phase !== 'MOVE_CREATURE') return;
         const currentPlayerSocketId = game.players[game.currentPlayerIndex];
         if (currentPlayerSocketId !== socket.id) return;
-        
+
         game.monsterPointsLeft = 0;
         nextPhase(game);
         io.to(roomId).emit('update-state', game);
@@ -447,7 +447,7 @@ io.on('connection', (socket) => {
     socket.on('board-boat', ({ roomId, pawnId, boatId }) => {
         const game = rooms[roomId];
         if (!game || game.phase !== 'MOVE_PAWNS') return;
-        
+
         const result = boardBoat(game, socket.id, pawnId, boatId);
         if (result.success) {
             const pawn = game.pawns.find(p => p.id === pawnId);
@@ -475,7 +475,7 @@ io.on('connection', (socket) => {
     socket.on('move-boat', ({ roomId, boatId, toHex }) => {
         const game = rooms[roomId];
         if (!game || game.phase !== 'MOVE_PAWNS') return;
-        
+
         const result = moveBoat(game, socket.id, boatId, toHex, game.pointsLeft);
         if (result.success) {
             game.pointsLeft -= result.dist;
@@ -489,7 +489,7 @@ io.on('connection', (socket) => {
                 game.boats = game.boats.filter(b => b.id !== boatId);
             } else {
                 applyMonsterEffectsAt(game, toHex.c, toHex.r);
-                
+
                 // Auto-Boarding: Pick up any swimmer in THIS hex if boat has space
                 const boatObj = game.boats.find(b => b.id === boatId);
                 const swimmersHere = game.pawns.filter(p => p.c === toHex.c && p.r === toHex.r && p.status === 'SWIMMER');
@@ -530,16 +530,16 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
-        
+
         for (const roomId in rooms) {
             const room = rooms[roomId];
-            
+
             // หาว่าคนที่หลุดอยู่ในห้องนี้ไหม
             if (room && room.lobbyPlayers) {
                 const index = room.lobbyPlayers.findIndex(p => p.id === socket.id);
                 if (index !== -1) {
                     room.lobbyPlayers.splice(index, 1); // เอาชื่อออกจากลิสต์
-                    
+
                     if (room.lobbyPlayers.length === 0) {
                         delete rooms[roomId]; // ลบห้องทิ้งถ้ายกเลิกกันหมด
                         console.log(`[Game] Room ${roomId} was deleted.`);
@@ -548,7 +548,7 @@ io.on('connection', (socket) => {
                         if (room.host === socket.id) {
                             room.host = room.lobbyPlayers[0].id;
                         }
-                        
+
                         // อัปเดต Lobby ให้คนอื่นๆ เน็ตไม่หลุด
                         io.to(roomId).emit('lobby-update', {
                             players: room.lobbyPlayers,
@@ -562,10 +562,10 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+const PORT = process.env.PORT || 8080;
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`====================================`);
-    console.log(`🚀 Survive Backend is running!`);
-    console.log(`📡 URL: http://localhost:${PORT}`);
+    console.log(`🚀 Survive Backend is ONLINE!`);
+    console.log(`📡 Listening on Port: ${PORT}`);
     console.log(`====================================`);
 });
