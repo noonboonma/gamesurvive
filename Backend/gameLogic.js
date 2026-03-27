@@ -346,8 +346,12 @@ const validatePath = (game, startHex, endHex, maxMove, capacityNeeded, isWaterOn
                 }
 
                 if (isBoat) {
-                    const sharkHere = game.monsters?.find(m => m.c === n.c && m.r === n.r && m.type === 'SHARK');
-                    if (sharkHere) continue; // เรือผ่านฉลามหรือเข้าช่องที่มีฉลามไม่ได้
+                    // ห้ามเรือเข้า Safe Island
+                    if (tile.type === 'SAFE_ISLAND') continue;
+
+                    // ห้ามเรือชนสัตว์ประหลาดทุกชนิด (ฉลาม, ก๊อดซิล่า, มังกรทะเล)
+                    const monsterHere = game.monsters?.find(m => m.c === n.c && m.r === n.r);
+                    if (monsterHere) continue; 
                 }
 
                 visited.add(key);
@@ -608,6 +612,10 @@ function placeBoatSetup(game, socketId, hex) {
     const tile = game.board.find(t => t.c === hex.c && t.r === hex.r);
     if (!tile || tile.type !== 'SEA') return { success: false, message: "ต้องวางเรือในน้ำเท่านั้น" };
 
+    // ห้ามวางเรือทับสัตว์ประหลาดที่มีอยู่แล้ว
+    const monsterHere = game.monsters && game.monsters.find(m => m.c === hex.c && m.r === hex.r);
+    if (monsterHere) return { success: false, message: "ห้ามวางเรือทับตำแหน่งที่มีสัตว์ประหลาดอยู่ครับ" };
+
     const boat = {
         id: `boat-${socketId}-${Date.now()}`,
         owner: socketId,
@@ -759,6 +767,11 @@ function useCard(game, socketId, cardType, targetData) {
 
         const targetTile = game.board.find(t => t.c === targetData.toHex.c && t.r === targetData.toHex.r);
         if (!targetTile || !targetTile.isRevealed) return { success: false, message: "ต้องย้ายไปในน้ำเท่านั้น" };
+
+        // ห้ามเอา monster วางตำแหน่งที่มี เรือหรือตัวละคร (เมื่อใช้การ์ดย้าย)
+        const pHere = game.pawns.find(p => p.c === targetData.toHex.c && p.r === targetData.toHex.r && p.status !== 'DEAD' && p.status !== 'SAVED');
+        const bHere = game.boats.find(b => b.c === targetData.toHex.c && b.r === targetData.toHex.r);
+        if (pHere || bHere) return { success: false, message: "ห้ามย้ายสัตว์ประหลาดไปทับตำแหน่งที่มีเรือหรือตัวละครอยู่ครับ" };
 
         monster.c = targetData.toHex.c;
         monster.r = targetData.toHex.r;
