@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 const Login = ({ onLoginSuccess }) => {
     const [isRegister, setIsRegister] = useState(false);
     const [formData, setFormData] = useState({ id: '', password: '', name: '' });
@@ -11,7 +13,7 @@ const Login = ({ onLoginSuccess }) => {
         const endpoint = isRegister ? '/api/register' : '/api/login';
 
         try {
-            const response = await fetch(`http://localhost:3000${endpoint}`, {
+            const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
