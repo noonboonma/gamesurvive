@@ -190,6 +190,16 @@ const GameBoard = ({ gameState, socket, roomId = "TEST_ROOM", currentUser, targe
                     );
                 })}
 
+                {/* วาดสัตว์ประหลาด (Monsters) */}
+                {gameState.monsters && gameState.monsters.map((monster) => (
+                    <Monster
+                        key={monster.id}
+                        {...monster}
+                        isSelected={selectedMonster?.id === monster.id}
+                        onClick={() => handleMonsterClick(monster)}
+                    />
+                ))}
+
                 {/* วาดตัวละคร (Pawns) */}
                 {gameState.pawns.map((pawn) => {
                     let offsetIndex, totalInHex;
@@ -217,16 +227,6 @@ const GameBoard = ({ gameState, socket, roomId = "TEST_ROOM", currentUser, targe
                         />
                     );
                 })}
-
-                {/* วาดสัตว์ประหลาด (Monsters) */}
-                {gameState.monsters && gameState.monsters.map((monster) => (
-                    <Monster
-                        key={monster.id}
-                        {...monster}
-                        isSelected={selectedMonster?.id === monster.id}
-                        onClick={() => handleMonsterClick(monster)}
-                    />
-                ))}
             </svg>
         </div>
     );

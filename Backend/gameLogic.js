@@ -187,8 +187,8 @@ function placePawn(game, socketId, hex, playerName, pawnValue) {
     }
 
     const playerPawns = game.pawns.filter(p => p.owner === socketId);
-    if (playerPawns.length >= 5) {
-        return { success: false, message: "วางครบ 5 ตัวแล้วครับ" };
+    if (playerPawns.length >= 10) {
+        return { success: false, message: "วางครบ 10 ตัวแล้วครับ" };
     }
 
     // Remove the value from hand

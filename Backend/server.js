@@ -150,7 +150,7 @@ io.on('connection', (socket) => {
             room.playerHands = {};
             room.playerCards = {};
             room.players.forEach(pid => {
-                room.playerHands[pid] = shuffleArray([1, 2, 3, 4, 5]);
+                room.playerHands[pid] = shuffleArray([1, 1, 2, 2, 3, 3, 4, 4, 5, 5]);
                 room.playerCards[pid] = [];
             });
 
