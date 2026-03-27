@@ -6,6 +6,7 @@ const cors = require('cors');
 const { Pool } = require('pg');
 // นำเข้าฟังก์ชันจาก gameLogic ให้ครบถ้วน (รวม nextPhase เข้ามาด้วย)
 const { initializeGame, validateMove, placePawn, sinkTile, nextPhase, moveMonster, boardBoat, unboardBoat, moveBoat, placeBoatSetup, countPawnsAt, shuffleArray, isCoastal, applyMonsterEffectsAt, useCard } = require('./gameLogic');
+const { runMigrations } = require('./migration/init');
 
 const app = express();
 
@@ -19,12 +20,15 @@ const pool = new Pool({
     ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false }
 });
 
-pool.connect((err, client, release) => {
+pool.connect(async (err, client, release) => {
     if (err) {
         return console.error('❌ Database Connection Error:', err.stack);
     }
     console.log('✅ PostgreSQL Connected Successfully!');
     release();
+
+    // รัน migration อัตโนมัติ — สร้างตารางถ้ายังไม่มี
+    await runMigrations(pool);
 });
 
 const server = http.createServer(app);
