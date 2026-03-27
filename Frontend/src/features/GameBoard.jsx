@@ -137,9 +137,9 @@ const GameBoard = ({ gameState, socket, roomId = "TEST_ROOM", currentUser, targe
             {gameState.phase === 'PLACE_PAWNS' && myHand && myHand.length > 0 && (
                 <div style={{ marginBottom: '15px', display: 'flex', gap: '10px', alignItems: 'center', background: '#34495e', padding: '10px 20px', borderRadius: '8px' }}>
                     <h3 style={{ margin: 0, color: 'white' }}>เลือกนักสำรวจที่จะวาง:</h3>
-                    {myHand.map(val => (
+                    {myHand.map((val, idx) => (
                         <button 
-                            key={val} 
+                            key={`${val}-${idx}`} 
                             onClick={() => setSelectedPawnValue(val)}
                             style={{ 
                                 padding: '10px 15px', 

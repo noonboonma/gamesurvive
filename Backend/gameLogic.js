@@ -191,8 +191,11 @@ function placePawn(game, socketId, hex, playerName, pawnValue) {
         return { success: false, message: "วางครบ 10 ตัวแล้วครับ" };
     }
 
-    // Remove the value from hand
-    game.playerHands[socketId] = game.playerHands[socketId].filter(v => v !== pawnValue);
+    // ลบหมากที่วางออกจากมือแค่ 1 ตัว (ห้ามใช้ filter เพราะจะลบเลขเดียวกันออกหมด)
+    const valIndex = game.playerHands[socketId].indexOf(pawnValue);
+    if (valIndex > -1) {
+        game.playerHands[socketId].splice(valIndex, 1);
+    }
 
     const newPawn = {
         id: `pawn-${socketId}-${Date.now()}`,
