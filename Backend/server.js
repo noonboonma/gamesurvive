@@ -15,11 +15,10 @@ app.use(express.json());
 
 // --- Database Connection ---
 const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false // จำเป็นสำหรับการเชื่อมต่อฐานข้อมูลภายนอก (เช่น Render)
+    }
 });
 
 pool.connect((err, client, release) => {
