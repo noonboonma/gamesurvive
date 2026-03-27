@@ -1,17 +1,16 @@
-# Step 1: Build โค้ด React/Vite
-FROM node:18-alpine AS build
+# Node.js Backend for Google Cloud Run
+FROM node:18-alpine
+
 WORKDIR /app
+
+# Copy package files and install production dependencies only
 COPY package*.json ./
-RUN npm install
+RUN npm ci --only=production
+
+# Copy application source
 COPY . .
-RUN npm run build
 
-# Step 2: ใช้ Nginx เป็น Web Server (ตัวนี้แหละจะช่วยเฝ้าพอร์ต 8080)
-FROM nginx:alpine
-# ก๊อปปี้ไฟล์ที่ build เสร็จแล้วไปที่ nginx
-COPY --from=build /app/dist /usr/share/nginx/html
-# สร้าง Config ให้ Nginx ฟังพอร์ต 8080 ตามที่ Google ต้องการ
-RUN echo 'server { listen 8080; location / { root /usr/share/nginx/html; index index.html; try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
-
+# Cloud Run uses port 8080 by default
 EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
+
+CMD ["node", "server.js"]

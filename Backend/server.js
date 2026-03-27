@@ -16,9 +16,7 @@ app.use(express.json());
 // --- Database Connection ---
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false // จำเป็นสำหรับการเชื่อมต่อฐานข้อมูลภายนอก (เช่น Render)
-    }
+    ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false }
 });
 
 pool.connect((err, client, release) => {
