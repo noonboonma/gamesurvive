@@ -42,6 +42,38 @@ function App() {
         socket.on('lobby-update', (data) => setLobbyData(data));
         socket.on('init-state', (state) => setGameState(state));
         socket.on('update-state', (state) => setGameState(state));
+        socket.on('game-over', (data) => {
+            const { scores } = data;
+            
+            // Format score list for SweetAlert
+            const scoreListHtml = scores.map((s, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '👤';
+                return `<div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #34495e; font-size: 1.1em; color: #2c3e50;">
+                    <span>${medal} ${s.name}</span>
+                    <span style="font-weight: bold; color: #27ae60;">${s.score} แต้ม</span>
+                </div>`;
+            }).join('');
+
+            Swal.fire({
+                title: '🌋 ภูเขาไฟระเบิด! เกมจบแล้ว',
+                html: `
+                    <div style="margin-top: 15px; border: 2px solid #e74c3c; border-radius: 12px; overflow: hidden; background: #fff; color: #333;">
+                        <h3 style="background: #e74c3c; color: white; margin: 0; padding: 10px;">สรุปคะแนนนักสำรวจ</h3>
+                        <div style="padding: 5px 0;">
+                            ${scoreListHtml}
+                        </div>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonText: 'รับทราบ (เริ่มใหม่)',
+                allowOutsideClick: false,
+                background: '#2c3e50',
+                color: '#fff'
+            }).then(() => {
+                window.location.reload(); 
+            });
+        });
+
         socket.on('error-msg', (msg) => {
             Swal.fire({
                 title: 'ระบบแจ้งค้าน:',

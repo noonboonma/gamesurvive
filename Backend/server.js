@@ -370,8 +370,23 @@ io.on('connection', (socket) => {
             }
 
             if (result.gameOver) {
-                io.to(roomId).emit('game-over', game);
-                console.log(`[Game] Volcano found! Game over.`);
+                // Calculate leaderboard
+                const scores = game.players.map(pid => {
+                    const playerObj = game.lobbyPlayers.find(lp => lp.id === pid);
+                    const playerName = playerObj ? playerObj.name : "Unknown";
+                    
+                    const playerScore = game.pawns
+                        .filter(p => p.owner === pid && p.status === 'SAVED')
+                        .reduce((sum, p) => sum + (p.value || 0), 0);
+                    
+                    return { id: pid, name: playerName, score: playerScore };
+                });
+
+                // Sort by score descending
+                scores.sort((a, b) => b.score - a.score);
+
+                io.to(roomId).emit('game-over', { scores, game });
+                console.log(`[Game] Volcano found! Game over. Scores:`, scores);
             } else {
                 nextPhase(game);
             }
